@@ -1,10 +1,84 @@
 # Decision models in banking, finance and insurance: where they fit and how to build them
 
-Most of the text that flows through a bank, an asset manager, a payment firm or an insurer is read by a person who then makes a small decision about it. Is this alert worth an investigator's hour? Is this claim simple enough to pay now? Does this news item change our view of a borrower? Is this sanctions hit the same person? The reading is expensive and the decision is narrow. That is the work a decision model is built for.
+Most of the AI conversation in banking is about chatbots. Most of the work in banking is decisions. The same holds in asset management, payments and insurance. All day, text arrives: an alert, a claim, a news item, a complaint, a document. Someone qualified reads it and makes a small call. The reading is expensive and the decision is narrow.
 
-This article covers what a decision model is, why it beats a general LLM for repeated decisions, where it fits in each sector, how to build and run one, and what it cannot do. The worked example is Tripwire-AdverseMedia-4B, an open-source adapter I built for adverse news about companies ([code](https://github.com/govindshukl/tripwire), [model](https://huggingface.co/govindshukl/Tripwire-AdverseMedia-4B)). The method is general.
+The first part is for the people who own those queues: heads of risk, compliance, credit, claims and operations, and the business owners who sign the budget. The second part is for the people who would build it. [Skip straight to it](#under-the-hood-how-a-decision-model-answers). The worked example throughout is Tripwire-AdverseMedia-4B, an open-source model I built for adverse news about companies ([code](https://github.com/govindshukl/tripwire), [model](https://huggingface.co/govindshukl/Tripwire-AdverseMedia-4B)). The method is general.
 
-## What a decision model is
+**Contents**
+
+For everyone
+
+- [Where the day goes](#where-the-day-goes)
+- [What a decision model is](#what-a-decision-model-is)
+- [Why not ask a chatbot](#why-not-ask-a-chatbot)
+- [What changes for the team](#what-changes-for-the-team)
+- [How to start](#how-to-start)
+
+For the technical reader
+
+- [Under the hood: how a decision model answers](#under-the-hood-how-a-decision-model-answers)
+- [Where decision models fit](#where-decision-models-fit)
+- [A recipe for building and running one](#a-recipe-for-building-and-running-one)
+- [Limits](#limits)
+- [What is published](#what-is-published)
+
+## <a id="where-the-day-goes"></a>Where the day goes
+
+In each of these queues a piece of text comes in and someone has to make a call.
+
+The AML queue. The monitoring system raises an alert: a transaction pattern, a customer profile, a short narrative. An investigator reads the history, checks the counterparties and writes up why it is nothing. Most are nothing. The investigator knows this by ten in the morning and still documents every one, because the alert that matters looks much the same at first glance, and it sits in the same queue, ordered by arrival time. The real case waits, the backlog grows, and the team hires to clear alerts rather than to investigate crime.
+
+Sanctions screening hits. A payment is held because a name on it resembles a name on a list. Most hits are namesakes: a common surname, a transliteration, a company with a similar name in another country. An analyst compares the records and releases the payment while the customer is on the phone. Clearing hits quickly matters because payments have cut off times. Clearing them carelessly matters more. One true match released by mistake is a breach, a fine and a long conversation with the regulator.
+
+Early warning on borrowers. A corporate lender has hundreds or thousands of borrowers, each with suppliers, customers, parents and officers, and news about any of them arrives all day. Somewhere in it is the item saying a borrower's biggest customer is cutting orders. The credit officer who would act on it is not reading the news. They are preparing the annual review, which is where the problem turns up a year later, in the accounts, when the options are fewer and worse.
+
+KYC periodic reviews. Every customer file comes round on a schedule set by its risk rating. The reviewer reads documents, search results and the customer's own answers, and decides whether anything has changed. Volumes are set by the calendar, not by the team's capacity, so a backlog builds, and a backlog in periodic reviews is one of the first things a regulator asks about. The team works the files that are due, not the files that have changed.
+
+Customer complaints. A complaint arrives by email, letter or call note, and someone classifies it, routes it and sets a priority. One misrouted complaint is an annoyance. A pattern of complaints about the same product, missed because each was handled on its own, is how a conduct problem becomes a remediation programme with a budget and a name. The signal was in the text all along. Nobody was reading across it.
+
+Claims at first notice of loss. A policyholder describes what happened. A handler decides whether it is covered, how big it is, how complicated it is and who should take it. Simple claims that could be paid this week wait behind complex ones, and the policyholder with the simple claim is the one who leaves at renewal. In the other direction, the claim whose story does not fit the damage moves through the fast lane because nobody had time to notice.
+
+Covenant certificates and trade documents. The borrower sends a compliance certificate with a covering note. The exporter presents documents against a letter of credit. Someone reads them against the agreement, looking for the sentence that says a covenant has been breached, a waiver is being requested, or a field does not match. The reading is slow and exact, and the discrepancy that is missed is the one the bank pays for.
+
+Different queues, same shape: a lot of reading, a small decision, and a lopsided cost. Missing the real one is expensive. Reading all the harmless ones is also expensive, just more quietly.
+
+## <a id="what-a-decision-model-is"></a>What a decision model is
+
+A decision model is a small AI model trained to read a piece of text and answer a fixed question with a fixed set of possible answers, giving a likelihood for each. It does not chat, write or summarise. It answers.
+
+Take the early warning case. Brennard Capital, an invented commercial lender, has Dunmore Components, an invented parts maker, on its book. A trade paper reports that Dunmore's largest customer is moving a contract to another supplier. The model is asked the same questions it is asked of every passage. Is this about the Dunmore we lend to, or a namesake? Is the news good or bad for the company? How serious, on a scale from nothing to default? Is it new, or an old story retold? For each it returns a likelihood for every answer. About our borrower: very likely. Bad news: very likely. Seriousness: most of the likelihood on "material pressure on earnings", some on worse. Current: likely.
+
+Then the policy decides. The bank's own rule, written down and owned by credit, sends an item this likely to be about the borrower, this likely to be adverse and at least this serious to the top of the credit officer's queue today. An item the model is unsure about goes to a person. Everything else is filed with the model's answers kept, so anyone can later see why it went where it did.
+
+That division of labour is the whole idea. The model reads. The policy decides. A person handles the uncertain middle.
+
+## <a id="why-not-ask-a-chatbot"></a>Why not ask a chatbot
+
+The obvious alternative is to paste each item into a general chatbot with a prompt. That is a good way to find out whether the task is possible at all. For a decision made thousands of times a day, it has problems.
+
+A chatbot writes an essay when you wanted a number. "This appears to be a material credit concern" mixes the reading, the judgement and the threshold into one sentence, and a program then has to pull an answer out of the prose. A decision model gives a likelihood, and your policy sets the line.
+
+A chatbot can give a different answer tomorrow, because of wording, its own randomness, or the provider updating it behind the scenes. A decision model gives the same answer to the same text every time, and the version in use is pinned and recorded.
+
+A chatbot usually runs outside the firm, so alert narratives, claim notes and customer emails leave the network. A decision model is small enough to run on one machine inside the building. It is cheap and fast, since nothing is written out: eighteen questions about a passage take about a quarter of a second. And because it does one narrow task, model risk can measure it on the firm's own labelled data like any other model.
+
+Chatbots still have a place in the same workflow: drafting the brief for the credit officer, writing the customer letter, open-ended questions, low volumes, and explaining the few items that reach a person. The decision model screens everything. A larger model writes up the handful that matter.
+
+## <a id="what-changes-for-the-team"></a>What changes for the team
+
+Analysts stop reading in arrival order. The queue is sorted by what matters, the clear nothings are closed with their reasoning on file, and the day goes on the cases that need a person. Every item carries an audit trail: the question, the likelihoods, the threshold that applied and who decided.
+
+The thresholds belong to the business. Tightening or loosening a line is a change to a written rule, approved like any policy change, not a change to the model. The model decides nothing with real consequences on its own. It sorts and suggests. The person on the review band decides, and those decisions become the examples that train the next version.
+
+## <a id="how-to-start"></a>How to start
+
+Pick one queue with volume, a clear reader today, a known cost for each kind of mistake, and a history of decisions already sitting in a system: alert dispositions, claim outcomes, routing history. Sanctions hit triage, claims triage and complaint routing are the usual candidates.
+
+Ask the people who do the work to write the questions, in the words they would use to train a new hire. Have the model answer them on last year's items and compare with what the team actually did. Set the thresholds with model risk in the room, and run it beside the current process before it changes anything.
+
+The rest of this article is for the people who will build it.
+
+## <a id="under-the-hood-how-a-decision-model-answers"></a>Under the hood: how a decision model answers
 
 A decision model reads a piece of text and answers a fixed question with a fixed set of options, returning a probability for every option. That fixed shape is what "typed" means in this article. The options can be yes or no, one of several named choices, or a level on an ordered scale. The model does this in a single forward pass (one read of the text through the network) and generates no text.
 
@@ -40,9 +114,9 @@ Four things follow.
 - It is auditable. For every item you can store the question, the probabilities and the threshold that applied, so a reviewer can see why it went where it went.
 - It can run inside the firm. A small model on one GPU handles a large volume, and claim notes, alert narratives and customer emails never leave the network.
 
-## Why a decision model rather than an LLM
+### Compared with a general LLM
 
-The obvious alternative is to send each item to a general LLM with a prompt. That is the right way to explore a task: you describe it in plain words and have something working the same afternoon. For a decision made thousands of times a day with the same question each time, a decision model is the better choice.
+The plain language version is in part one. The technical comparison, for a decision made thousands of times a day with the same question each time:
 
 | | General LLM | Decision model |
 | --- | --- | --- |
@@ -55,17 +129,15 @@ The obvious alternative is to send each item to a general LLM with a prompt. Tha
 
 The deeper difference is who decides. When an LLM writes "this looks like a material credit concern", the reading, the judgement and the threshold are mixed into one sentence of prose. A decision model separates them. The model reads. Its probabilities are the evidence. A policy written in code and owned by the business decides what happens. That separation is what model risk, internal audit and supervisors ask for, and it lets the business change its risk appetite without touching the model.
 
-LLMs remain the right tool for other parts of the same workflow: drafting a brief or a customer letter, open-ended questions, low volumes, labelling training data as a teacher, and explaining the few items that reach a person. The decision model screens everything. An LLM writes up the handful that matter.
-
 ### Compared with classic classifiers
 
-Classic classifiers and gradient-boosted models remain the right tool for tabular data. They are small, fast, understood by model risk teams and explainable feature by feature. Their weakness is open text. Bag-of-words features miss negation, timing and who did what to whom, and each new label set is a new model to build and validate.
+Classic classifiers and gradient boosted models remain the right tool for tabular data. They are small, fast, understood by model risk teams and explainable feature by feature. Their weakness is open text. Bag-of-words features miss negation, timing and who did what to whom, and each new label set is a new model to build and validate.
 
 Decision models sit between the two. They read text with the comprehension of a language model and return the kind of output a classifier returns. They do not replace rules or tabular models. They turn text into decisions, and into features for rules and tabular models to consume. In the adverse media example, the model says what the news means. Code decides what to do about it, using exposure, relationship weights and policy thresholds that were never inside the model.
 
 Hosted decision model APIs exist and can be a sensible way to start. The rest of this article is about building your own, which you need when the data cannot leave the firm, the labels are your own history, or the model must sit in your inventory under your control.
 
-## Where decision models fit
+## <a id="where-decision-models-fit"></a>Where decision models fit
 
 The pattern is the same in every sector: a queue of text items, a person who reads them, and a small decision with a known cost of being wrong in each direction. The tables below list, for each sector, the input, the typed questions, where labels come from, who uses the output and the main risk. All company names are invented.
 
@@ -81,7 +153,7 @@ The pattern is the same in every sector: a queue of text items, a person who rea
 | Complaint and email routing | Customer message | Team (one of N), priority, conduct risk indicator yes/no | Past routing and complaint outcomes | Operations, conduct risk | Vulnerable customers underprioritised |
 | KYC document and adverse information checks | Onboarding documents, search results | Document type? Fields consistent? Adverse information about this person? | Past onboarding outcomes, expert labels | Onboarding analysts | Wrong person matches on common names |
 
-Take Brennard Capital, an invented commercial lender with 1,200 corporate borrowers and a daily feed of several thousand news items about them and the companies linked to them. The model asks eighteen typed questions of every passage, and code uses the answers to decide which items reach a credit officer and in what order. Most items are nothing. The model's job is to say so with a probability that can be trusted, and to lift the few that matter.
+Brennard Capital, the lender from part one, has 1,200 corporate borrowers and a daily feed of several thousand news items about them and the companies linked to them. The model asks eighteen typed questions of every passage, and code uses the answers to decide which items reach a credit officer and in what order. Most items are nothing. The model's job is to say so with a probability that can be trusted, and to lift the few that matter.
 
 Sanctions and AML are often the fastest to build: years of dispositions exist and the output goes to a clear queue. They also carry the sharpest risk. A model trained on past dispositions learns the past team's habits, including the ones a regulator would not like. Audit the labels before training.
 
@@ -114,13 +186,13 @@ Meridian Mutual, an invented personal lines insurer, runs the claims triage ques
 
 Any firm that puts a generative model in front of customers or staff has a second problem: checking what the first model said. A decision model fits here too. The input is the generated output plus the context it was meant to answer. The questions are typed: supported by the source material (yes/no), contains a prohibited claim (yes/no), and an overall pass / revise / block. Labels come from reviewers who graded earlier outputs. Code lets the response through, sends it back for regeneration or holds it for a person. Because the guardrail is a separate, small model that generates no text, it is easy to validate on its own and hard to talk out of its answer.
 
-## A recipe for building and running one
+## <a id="a-recipe-for-building-and-running-one"></a>A recipe for building and running one
 
 The steps are in order. Where building Tripwire taught me something about a step, I have added it.
 
 ### 1. Write the questions first
 
-Before any data work, write the questions as if they were going into a rubric for a new hire. Keep each one small. Make the options mutually exclusive and give each a plain language definition. Use the three types where they fit: yes/no for a single fact (is this an adverse finding against the company), a choice for a routing decision (same entity, product mention only, different entity, cannot tell), a score when the options are ordered and you will want an expected value (severity 0 to 4).
+Before any data work, write the questions as if they were going into a rubric for a new hire, and review them with the people who do the work today. Keep each one small. Make the options mutually exclusive and give each a plain language definition. Use the three types where they fit: yes/no for a single fact (is this an adverse finding against the company), a choice for a routing decision (same entity, product mention only, different entity, cannot tell), a score when the options are ordered and you will want an expected value (severity 0 to 4).
 
 Two habits pay off. Include an option for the honest uncertain case where one exists, such as cannot tell, so the model is not forced into a confident wrong answer. And split compound questions. "Is this bad news about our borrower" is three questions (is it about the borrower, is it negative, how severe), and a model answers three clean questions better than one muddled one.
 
@@ -128,7 +200,7 @@ Tripwire's set has eighteen questions: same entity, direction, severity 0 to 4, 
 
 ### 2. Get labels you can trust
 
-Label quality decides the model. In descending order of value:
+Label quality decides the model. A few thousand trustworthy labels are enough to start. In descending order of value:
 
 1. Real outcomes and past decisions: alert dispositions, claim outcomes, subrogation recoveries, credit events, document examiner findings. These are what the model is supposed to predict.
 2. Expert labels against a written rubric, with two labellers and a measured agreement rate. Where the two disagree the rubric is unclear, and fixing the rubric is part of the work.
@@ -140,7 +212,7 @@ Balance rare classes deliberately, then check the balance against reality. In Tr
 
 Feed known failure modes with targeted examples: namesakes, product mentions (an article about a car is not an article about the carmaker's credit), old news retold, dismissed allegations, companies that are the victim rather than the perpetrator, and positive events written in negative sounding language. Each is a class of error a reviewer will recognise, and each wants a few hundred examples.
 
-Keep evaluation data and its style out of training. Not only the items but the template. If your test set is headlines in a particular house style and your training set has headlines in that style, your test score will flatter you.
+Set aside a test split before anyone trains anything, and keep evaluation data and its style out of training. Not only the items but the template. If your test set is headlines in a particular house style and your training set has headlines in that style, your test score will flatter you.
 
 ### 3. Pick a base model and adapt it
 
@@ -180,6 +252,8 @@ else:
 
 The middle band is the important one. Items the model is unsure about go to a person instead of being silently dropped or silently escalated. The width of the band is an operational choice, set by review capacity and the cost of each kind of error, and it is written down where model risk can see it. The same structure works for a choice question (route on the top option only when it clears a margin over the second) and for a score (route on the expected value and on the probability mass above a level).
 
+Record the model's probabilities with every item from day one, so the audit trail exists before anyone asks for it.
+
 Keeping thresholds in code has a second benefit. Changing a threshold is a configuration change with a small audit trail. Changing the model is a model change with a validation cycle. Most policy adjustments turn out to be the first kind.
 
 ### 6. Serve it efficiently
@@ -190,13 +264,13 @@ On one A100 (40 GB), a passage with eighteen questions took 1,524 ms when each q
 
 Serve one base model with many adapters and pick the adapter per request, so the sanctions adapter, the claims adapter and the complaints adapter share a GPU. Serving engines such as vLLM support many adapters on one base and add continuous batching across documents. Check that the engine supports your base model's layer types before you rely on it.
 
-Calibrate with temperature scaling (a single number that stretches or squashes the probabilities) on held-out labelled data from your own population. One scalar fitted on a few thousand labelled items is usually enough to make the probabilities honest, and it is cheap to refit when the population drifts.
+Calibrate with temperature scaling (a single number that stretches or squashes the probabilities) on held out labelled data from your own population. One scalar fitted on a few thousand labelled items is usually enough to make the probabilities honest, and it is cheap to refit when the population drifts.
 
 ### 7. Govern it as a model
 
 Each adapter is a model in the inventory: validated, versioned and rolled back on its own, with its own data lineage, evaluation report and owner. The base model is a shared dependency with its own entry. This is the SR 11-7 shape of model risk management, and the NIST AI RMF covers the same ground in broader language. A decision model needs no new governance framework. It needs the existing one applied to four things that are easy to skip.
 
-Monitor drift and override rates. The share of items in each routing band, the share of reviewed items where the person disagreed with the model, and the score distribution over time are cheap to compute and are the earliest warning that the world has moved. A rising override rate in one category is a request for labels in that category.
+Monitor drift and override rates. The share of items in each routing band, the share of reviewed items where the person disagreed with the model, and the score distribution over time are cheap to compute and are the earliest warning that the world has moved. A rising override rate in one category is a request for labels in that category, and the labels from the review band feed the next version.
 
 Keep a person on consequential outcomes. The routing bands above are the mechanism. A decision model suggests, prioritises and sorts. A person decides where the decision has real consequences for a person or a firm.
 
@@ -204,18 +278,12 @@ Know where the regulatory lines are. Under the EU AI Act, creditworthiness asses
 
 Check data rights. Every data source has terms, and so does every model whose outputs you train on. News licences often restrict redistribution and sometimes model training. Open datasets carry attribution and sometimes non-commercial clauses (Tripwire's name pair data is CC BY-NC, and the model card says so). If you bootstrap labels from another model, read its terms on training with its outputs. Write the lineage into the inventory entry. Model risk and legal will both ask.
 
-## Limits
+## <a id="limits"></a>Limits
 
 A decision model reads what the text says. It does not check facts, and hostile or simply wrong text will mislead it. It can confuse similarly named companies and people, which is why the same entity question exists and why its answer is a lead rather than a finding. Its probabilities are only as calibrated as your last temperature fit on your own data.
 
-Its answers degrade on questions far from the ones it was trained on. A new question usually wants a few hundred labelled examples rather than a prompt change. A small model knows less about the world than a large one, so a passage that needs outside knowledge (what a regulator's letter implies, whether a counterparty is state-owned) may need a second step with a larger model or a lookup. And a model trained on past decisions inherits the past team's biases, which is the strongest argument for auditing labels before training and override rates after.
+Its answers degrade on questions far from the ones it was trained on. A new question usually wants a few hundred labelled examples rather than a prompt change. A small model knows less about the world than a large one, so a passage that needs outside knowledge (what a regulator's letter implies, whether a counterparty is state owned) may need a second step with a larger model or a lookup. And a model trained on past decisions inherits the past team's biases, which is the strongest argument for auditing labels before training and override rates after.
 
-## How to start
-
-Pick one decision: a queue with high volume, a clear reader today, a known cost for each kind of error, and labels that already exist somewhere (dispositions, outcomes, routing history). Sanctions hit triage, claims triage and complaint routing are the usual candidates.
-
-Write the questions and review them with the people who do the work today. Gather a few thousand trustworthy labels, outcomes first, and set aside a test split before anyone trains anything. Train one adapter on a small open base model. Measure it on unseen data, two seeds before you believe a difference.
-
-Add a review band. Put the thresholds in code, send the middle to a person, and record the model's probabilities with every item so the audit trail exists from day one. Then register it, monitor overrides, and let the labels from the review band feed the next version.
+## <a id="what-is-published"></a>What is published
 
 The Tripwire code and adapter are at [github.com/govindshukl/tripwire](https://github.com/govindshukl/tripwire) and [huggingface.co/govindshukl/Tripwire-AdverseMedia-4B](https://huggingface.co/govindshukl/Tripwire-AdverseMedia-4B), under Apache-2.0. The question file, the prompt format, the tree reading inference code and the needle benchmark script are there to copy for your own decision.
