@@ -6,7 +6,7 @@ typed questions about a company you monitor (is it really about that company, is
 how severe, which kind of problem, is it current), each with a probability per option, in one forward
 pass and without generating text.
 
-- Model: `<your-hf-username>/Tripwire-AdverseMedia-4B` on Hugging Face (model card, results, limits)
+- Model: [govindshukl/Tripwire-AdverseMedia-4B](https://huggingface.co/govindshukl/Tripwire-AdverseMedia-4B) on Hugging Face (model card, results, limits)
 - How it was built: [ARTICLE.md](ARTICLE.md)
 
 ## Install
@@ -21,7 +21,7 @@ works, slowly.
 ```python
 from tripwire import Tripwire, load_questions
 
-tw = Tripwire(adapter="<your-hf-username>/Tripwire-AdverseMedia-4B")
+tw = Tripwire(adapter="govindshukl/Tripwire-AdverseMedia-4B")
 state = {"target": {"name": "Halvorsen Marine ASA", "type": "company",
                     "description": "Norwegian operator of offshore supply vessels.",
                     "why_tracked": "Monitored company"},
@@ -48,7 +48,7 @@ as one batch: about 262 ms for 18 questions on an A100.
 
 ## Benchmark
 ```bash
-python benchmark/needle_eval.py --adapter <your-hf-username>/Tripwire-AdverseMedia-4B
+python benchmark/needle_eval.py --adapter govindshukl/Tripwire-AdverseMedia-4B
 ```
 Scores the public, human-labelled needle headlines (MIT): defaults and downgrades caught, upgrades
 and refinancings wrongly flagged. Results for comparison models are in the model card.

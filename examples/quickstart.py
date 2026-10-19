@@ -2,7 +2,7 @@
 import json
 from tripwire import Tripwire, load_questions
 
-tw = Tripwire(adapter="<your-hf-username>/Tripwire-AdverseMedia-4B")
+tw = Tripwire(adapter="govindshukl/Tripwire-AdverseMedia-4B")
 state = {
     "target": {"name": "Halvorsen Marine ASA", "type": "company", "country": "NO", "sector": "Shipping",
                "description": "Norwegian operator of offshore supply vessels.", "why_tracked": "Monitored company"},

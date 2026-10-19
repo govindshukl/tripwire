@@ -26,7 +26,7 @@ from . import prompt as P
 
 BASE = "Qwen/Qwen3.5-4B"
 BASE_REVISION = "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a"
-ADAPTER = "Tripwire-AdverseMedia-4B"      # Hugging Face id of the adapter, or a local folder
+ADAPTER = "govindshukl/Tripwire-AdverseMedia-4B"   # Hugging Face id of the adapter, or a local folder
 LEAD = "<think>\n\n</think>\n\n"           # what Qwen3.5's chat template writes before a direct answer
 QUESTIONS = Path(__file__).resolve().parents[1] / "questions" / "adverse_media.json"
 

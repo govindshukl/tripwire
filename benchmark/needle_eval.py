@@ -7,7 +7,7 @@ about", and the example decision rule (Tripwire.adverse) decides whether it is a
              from Chapter 11, which every model reads as positive news)
   false alarms   upgrades and refinancings read as adverse
 
-Run:  python benchmark/needle_eval.py --adapter <your-hf-username>/Tripwire-AdverseMedia-4B
+Run:  python benchmark/needle_eval.py --adapter govindshukl/Tripwire-AdverseMedia-4B
 """
 
 from __future__ import annotations
