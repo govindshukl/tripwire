@@ -2,7 +2,7 @@
 
 Most of the text that flows through a bank, an asset manager, a payment firm or an insurer is read by people who then make a small decision about it. Is this alert worth an investigator's hour? Is this claim simple enough to pay now? Does this news item change what we think about a borrower? Is this hit on the sanctions list the same person? The reading is expensive and the decision is narrow. That is the shape of work a decision model is built for.
 
-This article explains what a decision model is, where it fits across the three sectors, how to build and run one, and what it cannot do. The worked example is Tripwire-AdverseMedia-4B, an open-source adapter for adverse news about companies ([code](https://github.com/govindshukl/tripwire), [model](https://huggingface.co/govindshukl/Tripwire-AdverseMedia-4B)). The method is general.
+This article explains what a decision model is, why it beats a general-purpose LLM for repeated decisions, where it fits across the three sectors, how to build and run one, and what it cannot do. The worked example is Tripwire-AdverseMedia-4B, an open-source adapter for adverse news about companies ([code](https://github.com/govindshukl/tripwire), [model](https://huggingface.co/govindshukl/Tripwire-AdverseMedia-4B)). The method is general.
 
 ## What a decision model is
 
@@ -40,9 +40,24 @@ Several things follow from this design.
 - It is auditable. For every item you can store the question, the probabilities and the threshold that applied. A reviewer can see why an item went where it went.
 - It can run inside the firm. A small model on one GPU handles a large volume. Claim notes, alert narratives and customer emails never leave the firm's network.
 
-### How it compares
+## Why a decision model rather than an LLM
 
-Chat and generative LLMs are flexible. You can describe a new task in the prompt and get a reasonable answer the same afternoon. The costs are speed (tokens are generated one at a time), output handling (the answer is text that must be parsed, and the parser is where silent failures live) and calibration (a model that writes the word "likely" is giving you a word, and the probability behind it is hard to recover and harder to trust). For a decision made ten thousand times a day with the same question each time, these costs dominate.
+The obvious alternative is to send each item to a general-purpose LLM with a prompt and ask for the answer. You can describe a new task in plain words and have something working the same afternoon, which makes it the right way to explore a task. For a decision made thousands of times a day with the same question each time, a decision model is the better choice:
+
+| | General-purpose LLM | Decision model |
+| --- | --- | --- |
+| Output | Free text that must be parsed into an answer; the parser is where silent failures live | A probability for every option; nothing to parse |
+| Confidence | A word such as "likely", or a score the model reports about itself | A probability that can be checked against outcomes and calibrated |
+| Consistency | Can shift with sampling, prompt wording and provider model updates | The same input gives the same probabilities; the version is pinned in your inventory |
+| Speed and cost | Pays for every generated token, often seconds per item | One forward pass; Tripwire answers 18 questions about a passage in about a quarter of a second on one GPU |
+| Data | Usually a hosted service outside the firm | A small open model on the firm's own hardware |
+| Validation | A large general model, hard to validate for one narrow task | One narrow task, measured on your own labelled data like any other model |
+
+The deeper difference is who decides. When an LLM writes "this looks like a material credit concern", the reading, the judgement and the threshold are mixed together in one sentence of prose. A decision model separates them. The model reads, its probabilities are the evidence, and a policy written in code and owned by the business decides what happens. That separation is what model risk, internal audit and supervisors ask for, and it means the business can change its risk appetite without touching the model.
+
+LLMs remain the right tool for other parts of the same workflow: drafting a brief or a customer letter, answering open-ended questions, handling low volumes, labelling training data as a teacher, and explaining the few items that reach a person. The two work well together. The decision model screens everything, and an LLM writes up the handful that matter.
+
+### Compared with classic classifiers
 
 Classic classifiers and gradient-boosted models remain the right tool for tabular data. They are small, fast, well understood by model-risk teams and explainable feature by feature. Their weakness is open text. Bag-of-words features miss negation, timing and who did what to whom, and each new label set is a new model to build and validate.
 
