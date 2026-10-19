@@ -55,7 +55,11 @@ class Tripwire:
         from transformers import AutoModelForImageTextToText, AutoTokenizer
         self.device = device or ("cuda" if torch.cuda.is_available() else
                                  "mps" if torch.backends.mps.is_available() else "cpu")
-        dtype = dtype or (torch.bfloat16 if self.device != "cpu" else torch.float32)
+        if dtype is None:   # bfloat16 where the hardware has it; float16 on older GPUs (e.g. T4); float32 on CPU
+            if self.device == "cuda":
+                dtype = torch.bfloat16 if torch.cuda.is_bf16_supported(including_emulation=False) else torch.float16
+            else:
+                dtype = torch.bfloat16 if self.device == "mps" else torch.float32
         self.tok = AutoTokenizer.from_pretrained(base, revision=base_revision)
         model = AutoModelForImageTextToText.from_pretrained(base, revision=base_revision, dtype=dtype).to(self.device)
         model = PeftModel.from_pretrained(model, adapter)
