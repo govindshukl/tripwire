@@ -8,6 +8,7 @@ pass and without generating text.
 
 - Model: [govindshukl/Tripwire-AdverseMedia-4B](https://huggingface.co/govindshukl/Tripwire-AdverseMedia-4B) on Hugging Face (model card, results, limits)
 - How it was built: [ARTICLE.md](ARTICLE.md)
+- Decision models across banking, finance and insurance: [articles/decision-models-in-financial-services.md](articles/decision-models-in-financial-services.md)
 
 ## Install
 ```bash
