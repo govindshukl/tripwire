@@ -1,0 +1,11 @@
+Tripwire-AdverseMedia-4B
+Copyright 2026 the Tripwire-AdverseMedia-4B author
+
+This product is a LoRA adapter for Qwen3.5-4B (https://huggingface.co/Qwen/Qwen3.5-4B),
+Copyright the Qwen team, Alibaba Cloud, licensed under the Apache License, Version 2.0.
+The adapter changes no file of the base model; it is applied on top of it.
+
+Training data included company-name pairs from OpenSanctions (https://www.opensanctions.org),
+licensed under Creative Commons Attribution-NonCommercial 4.0 (CC BY-NC 4.0).
+Training labels for news passages came from TypeSafe's Jev API. Fictional training passages
+were written with Claude (Anthropic).

@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+needle_results.jsonl
+.venv/

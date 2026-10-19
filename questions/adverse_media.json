@@ -1,0 +1,105 @@
+{
+ "name": "adverse_media_core",
+ "version": "1.0",
+ "note": "Replace {mention} with the text in the article that names the company or person.",
+ "questions": {
+  "same_entity": {
+   "type": "choice",
+   "instructions": "Does '{mention}' in `article` refer to the company or person described in `target`?",
+   "criteria": {
+    "same": "Yes: the company or person described in target, as an actor or subject of the news, including news about its products as its business: recalls, defects, sales, prices, launches",
+    "product_mention": "Only a product or brand it makes appears incidentally (for example someone drove a Nissan, a crash involved a Tesla, an ad features a Volkswagen); the article is not about the company",
+    "different": "No: another company, person, place or thing with a similar name",
+    "cannot_tell": "The article does not give enough to decide"
+   }
+  },
+  "severity": {
+   "type": "score",
+   "instructions": "How severe is the event in `article` for `target`'s credit standing?",
+   "criteria": [
+    "No signal for credit: routine or unrelated news",
+    "Early sign: rumour, minor fine, small operational issue",
+    "Material pressure: profit warning, formal investigation, significant recall or loss of a major contract",
+    "Acute stress: missed payments, criminal charges, restructuring advisers appointed",
+    "Default event: insolvency filing, payment default, conviction, official sanctions designation"
+   ]
+  },
+  "direction": {
+   "type": "choice",
+   "instructions": "Is the news in `article` negative, neutral or positive for `target`?",
+   "criteria": {
+    "negative": null,
+    "neutral": null,
+    "positive": null
+   }
+  },
+  "credit_relevant": {
+   "type": "noul",
+   "instructions": "Could the event in `article` affect `target`'s revenue, cash, funding or ability to repay debt?"
+  },
+  "adverse_finding": {
+   "type": "noul",
+   "instructions": "Does `article` report an allegation, charge, investigation, penalty or ruling against `target`?",
+   "criteria": {
+    "true": "Yes: something was alleged, opened, imposed or decided against target",
+    "false": "No: nothing against target, or the claim was dismissed, rejected or decided in its favour, or target is only a victim or bystander"
+   }
+  },
+  "current_development": {
+   "type": "noul",
+   "instructions": "Does `article` report a current development about `target`: something that happened or was disclosed recently?",
+   "criteria": {
+    "true": "Yes: news of a recent event, decision, filing or disclosure",
+    "false": "No: commentary, opinion, analysis, an explainer, or a look back at past events"
+   }
+  },
+  "cat_AM-LIQ": {
+   "type": "noul",
+   "instructions": "category: Liquidity and payment distress: missed payments to suppliers or lenders, delayed salaries or wages, asked suppliers or creditors for longer payment terms, sought or received emergency funding or a cash lifeline\nDoes `article` report an event concerning `target` that fits `category`?"
+  },
+  "cat_AM-FIN": {
+   "type": "noul",
+   "instructions": "category: Financing and capital problems: a covenant breach, or a waiver requested from lenders, a failed or stalled refinancing, a credit rating downgrade, a distressed debt exchange, a sharp fall in its bond prices\nDoes `article` report an event concerning `target` that fits `category`?"
+  },
+  "cat_AM-RST": {
+   "type": "noul",
+   "instructions": "category: Restructuring and insolvency: restructuring advisers appointed, a standstill agreement with creditors, a scheme of arrangement or restructuring plan, an insolvency or bankruptcy filing, administration, receivership or liquidation\nDoes `article` report an event concerning `target` that fits `category`?"
+  },
+  "cat_AM-OPS": {
+   "type": "noul",
+   "instructions": "category: Operating performance problems: a profit warning or a reported loss, a cut to guidance or forecasts, a production halt or delivery stoppage, a quality or safety failure in its products, a site or plant closure, large layoffs or job cuts\nDoes `article` report an event concerning `target` that fits `category`?"
+  },
+  "cat_AM-DEP": {
+   "type": "noul",
+   "instructions": "category: Commercial dependency problems: a key customer lost or failing, a key supplier failing or disrupted, a major contract or licence lost\nDoes `article` report an event concerning `target` that fits `category`?"
+  },
+  "cat_AM-GOV": {
+   "type": "noul",
+   "instructions": "category: Governance and reporting problems: a sudden exit of the ceo or cfo, the auditor resigned or qualified the accounts, accounts filed late or delayed, doubt about its ability to continue as a going concern\nDoes `article` report an event concerning `target` that fits `category`?"
+  },
+  "cat_AM-LEG": {
+   "type": "noul",
+   "instructions": "category: Legal and regulatory problems: material litigation or a class action against it, an investigation by a regulator, prosecutor or safety authority, a fine or penalty, a licence or permit suspended, a product recall, the case concerns misconduct by the company or its people (bribery, fraud, market abuse, deception)\nDoes `article` report an event concerning `target` that fits `category`?"
+  },
+  "cat_AM-GRP": {
+   "type": "noul",
+   "instructions": "category: Group and ownership problems: its parent or sponsor is in distress, a change of control, a forced or distressed asset sale\nDoes `article` report an event concerning `target` that fits `category`?"
+  },
+  "cat_AM-EXT": {
+   "type": "noul",
+   "instructions": "category: External events that harm it: a serious accident involving its operations or products, a fire or explosion, a cyberattack or data breach, a natural disaster affecting its operations, a strike or industrial action, it lost money to fraud as a victim\nDoes `article` report an event concerning `target` that fits `category`?"
+  },
+  "cat_AM-FCR": {
+   "type": "noul",
+   "instructions": "category: Financial crime and misconduct: fraud by the company or its people, bribery or corruption, money laundering, sanctions evasion, tax evasion\nDoes `article` report an event concerning `target` that fits `category`?"
+  },
+  "cat_AM-ESG": {
+   "type": "noul",
+   "instructions": "category: Environmental and social harm: pollution or an environmental breach, labour or human-rights abuse, fatalities linked to its operations\nDoes `article` report an event concerning `target` that fits `category`?"
+  },
+  "cat_AM-POS": {
+   "type": "noul",
+   "instructions": "category: Positive development: a refinancing completed, an equity injection or new investment, a major contract won, a credit rating upgrade\nDoes `article` report an event concerning `target` that fits `category`?"
+  }
+ }
+}
