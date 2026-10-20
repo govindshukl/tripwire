@@ -12,8 +12,8 @@ pass and without generating text.
 
 ## Install
 ```bash
-pip install torch "transformers>=5.19" "peft>=0.21" accelerate huggingface_hub
 git clone https://github.com/govindshukl/tripwire.git && cd tripwire
+pip install -e ".[fast]"     # or pip install -e . without the CUDA kernels
 ```
 A GPU with 16 GB or more is comfortable (the model runs in bfloat16, about 9 GB); Apple Silicon
 works, slowly.

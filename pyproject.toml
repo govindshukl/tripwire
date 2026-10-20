@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tripwire-decisions"
+version = "0.1.1"
+description = "Typed decisions about news from Qwen3.5-4B with the Tripwire-AdverseMedia-4B adapter"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+dependencies = [
+    "torch",
+    "transformers>=5.19",
+    "peft>=0.21",
+    "accelerate",
+    "huggingface_hub",
+    "torchao>0.16.0",   # peft refuses older torchao (Colab ships 0.10), so require a new one
+]
+
+[project.optional-dependencies]
+fast = ["flash-linear-attention"]   # faster linear-attention kernels on CUDA
+
+[tool.setuptools]
+packages = ["tripwire"]
