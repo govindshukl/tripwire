@@ -2,7 +2,10 @@
 
 Shreyas94/needle-event-classifier-eval holds 1,102 human-reviewed financial-news headlines in 13
 event classes. Each unique headline is judged as a passage about "the company the headline is
-about", and the example decision rule (Tripwire.adverse) decides whether it is adverse. Reported:
+about", and the example decision rule (Tripwire.adverse) decides whether it is adverse, without its
+same-company test: every headline is about its company by construction, and asking whether "the
+company" in a headline is the target is not a meaningful question (the model often answers "cannot
+tell"). Reported:
   recall     defaults and downgrades read as adverse (and the same leaving out companies emerging
              from Chapter 11, which every model reads as positive news)
   false alarms   upgrades and refinancings read as adverse
@@ -48,9 +51,9 @@ def main(argv=None):
     pos = neg = hit = hit_excl = pos_excl = fa = 0
     with open(a.out, "w") as f:
         for r in headlines():
-            state = {"target": {"name": "the company the headline is about", "why_tracked": "Monitored company"},
+            state = {"target": {"name": "the company the headline is about", "why_tracked": "Borrower of the bank"},
                      "article": {"headline": r["headline"], "passage": "(headline only)"}}
-            d = tw.adverse(tw.decide(state, qs))
+            d = tw.adverse(tw.decide(state, qs), same_min=0.0)   # the company is given (see above)
             f.write(json.dumps({**r, **d}) + "\n")
             if r["label"] in ("default", "downgrade"):
                 pos += 1

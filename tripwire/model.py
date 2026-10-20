@@ -91,9 +91,10 @@ class Tripwire:
 
     @staticmethod
     def adverse(answers: dict, same_min: float = 0.5, negative_min: float = 0.3, severity_min: float = 0.5) -> dict:
-        """The example decision rule the benchmark uses: the passage is about the target, the news is
+        """An example decision rule: the passage is about the target (P(same) >= `same_min`), the news is
         negative (or negative is at least `negative_min` likely), and expected severity reaches
-        `severity_min` (scale 0-4). Thresholds are yours to set; this is not a credit decision."""
+        `severity_min` (scale 0-4). The needle benchmark sets same_min=0 because its headlines are about
+        their company by construction. Thresholds are yours to set; this is not a credit decision."""
         p_same = answers["same_entity"]["probabilities"]["same"]
         d = answers["direction"]
         negative = d["choice"] == "negative" or d["probabilities"]["negative"] >= negative_min
