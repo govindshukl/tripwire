@@ -220,8 +220,6 @@ A small open model is enough. Tripwire uses a 4B parameter base under Apache-2.0
 
 Two training details are worth copying. The training loss is computed on the single answer token only, so the model learns to put probability on the right option and nothing else. And the order of the options is shuffled per example, so the model reads the options rather than learning that the answer is usually B.
 
-A smaller experiment on a 0.8B proxy model points at a third. Computing the loss over the answer options only, instead of over the whole vocabulary, removed a systematic misreading of one upgrade headline template (false alarms fell from 16 to 1 out of 87). That is one seed on a small model: an early finding to test on your own data, not a rule.
-
 Tripwire was trained for one epoch over about 16,000 examples.
 
 ### 4. Evaluate on data the model never saw
